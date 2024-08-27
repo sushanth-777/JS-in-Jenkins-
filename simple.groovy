@@ -1,27 +1,35 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:14'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
 
     stages {
-        stage('Checkout') {
-            steps {
-                // Pull code from GitHub
-                git branch: 'main', url: 'https://github.com/sushanth-777/JS-in-Jenkins-.git'
-                // List files to verify the checkout
-                sh 'ls -al'
-            }
-        }
+        // stage('Checkout') {
+        //     steps {
+        //         // Pull code from GitHub
+        //         git branch: 'main', url: 'https://github.com/sushanth-777/JS-in-Jenkins-.git'
+        //         // List files to verify the checkout
+        //         sh 'ls -al'
+        //     }
+        // }
 
         stage('Build') {
             steps {
                 echo 'Building the project...'
-                // If there's a build step, include it here
-                // For static files, this might be empty
+                git branch: 'main', url: 'https://github.com/sushanth-777/JS-in-Jenkins-.git'
+                sh 'ls -al'
+                sh 'npm install'
+                sh 'npm run build'
             }
         }
 
         stage('Test') {
             steps {
                 echo 'Running tests...'
+                sh 'npm run test'
                 // If you have tests, include them here
                 // For static files, this might be empty
             }
@@ -31,14 +39,8 @@ pipeline {
             steps {
                 echo 'Deploying the project...'
                 // Serve the static files using a simple HTTP server
-                sh '''
-                    python3 -m http.server 1234 &
-                    while ! curl -s http://localhost:1234; do
-                        echo "Waiting for server to start..."
-                        sleep 1
-                    done
-                    echo "Deployment successful, application is running"
-                '''
+                sh 'docker build -t calculator-js .'
+                sh 'docker run -p 8081:80 calculator-js'
             }
         }
     }
